@@ -427,16 +427,23 @@ export const WalletProvider = ({ children = null as any }) => {
     sim: boolean
   ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
+      console.log('hola 1');
       const pool =
         poolMeta.version === Version.V2
           ? new PoolContractV2(poolMeta.id)
           : new PoolContractV2(poolMeta.id);
+      console.log('hola 2');
       const operation = xdr.Operation.fromXDR(pool.submit(submitArgs), 'base64');
+      console.log('hola 3');
       if (sim) {
+        console.log('hola 3.5');
         return await simulateOperation(operation);
       }
+      console.log('hola 4');
       await invokeSorobanOperation<Positions>(operation);
+      console.log('hola 5');
       cleanPoolCache(poolMeta.id);
+      console.log('hola 6');
       cleanWalletCache();
     }
   }
