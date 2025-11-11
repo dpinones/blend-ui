@@ -20,6 +20,7 @@ import {
   usePoolMeta,
   usePoolOracle,
   usePoolUser,
+  useQueryClientCacheCleaner,
   useTokenBalance,
   useTokenMetadata,
 } from '../../hooks/api';
@@ -50,6 +51,7 @@ export const LendAnvil: React.FC<ReserveComponentProps> = ({ poolId, assetId }) 
   const { connected, walletAddress, poolSubmit, txStatus, txType, isLoading, txInclusionFee } =
     useWallet();
 
+  const { cleanPoolCache, cleanWalletCache } = useQueryClientCacheCleaner();
   const { data: poolMeta } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
@@ -111,7 +113,19 @@ export const LendAnvil: React.FC<ReserveComponentProps> = ({ poolId, assetId }) 
           },
         ],
       };
-      return await poolSubmit(poolMeta, submitArgs, sim);
+      // Create a copy of poolMeta to avoid mutating the original
+      const poolMetaToSubmit = !sim
+        ? { ...poolMeta, id: 'CBPXVCDXVCRCD7RHXYPQUHKVE7OGLU6VSUHWIXYFBRRAS2VEZKZ2VA7L' }
+        : poolMeta;
+      const result = await poolSubmit(poolMetaToSubmit, submitArgs, sim);
+
+      // If not simulating and we used a different pool ID, clean the cache of the original pool
+      if (!sim && poolMetaToSubmit.id !== poolMeta.id) {
+        cleanPoolCache(poolMeta.id);
+        cleanWalletCache();
+      }
+
+      return result;
     }
   };
 
