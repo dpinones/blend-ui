@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Snackbar, useTheme } from '@mui/material';
 import { Networks } from '@stellar/stellar-sdk';
 import { useRouter } from 'next/router';
 import { ReactNode, useEffect } from 'react';
@@ -13,6 +13,7 @@ import { useWallet } from '../contexts/wallet';
 import { useBackstop, useFeeStats, usePoolMeta } from '../hooks/api';
 
 export default function DefaultLayout({ children }: { children: ReactNode }) {
+  const theme = useTheme();
   const { viewType, trackPool, setLastPool } = useSettings();
   const { txInclusionFee, setTxInclusionFee } = useWallet();
   const router = useRouter();
@@ -85,6 +86,22 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
         </Box>
         <Box />
       </Box>
+      <Snackbar
+        open={true}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{
+          '& .MuiSnackbarContent-root': {
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.3)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            fontSize: '14px',
+            fontWeight: 500,
+          },
+        }}
+        message="Protected by Orbit Shield"
+      />
     </>
   );
 }
