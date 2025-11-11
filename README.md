@@ -43,3 +43,4 @@ Each release gets deployed to IPFS automatically. To get the latest release, ple
 ## Contributing
 
 Contributions are welcome! If you have any ideas, suggestions, or bug fixes, please feel free to open an issue or submit a pull request.
+
