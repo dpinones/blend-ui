@@ -34,9 +34,19 @@ const Supply: NextPage = () => {
   const router = useRouter();
   const { poolId, assetId } = router.query;
   const safePoolId = typeof poolId == 'string' && /^[0-9A-Z]{56}$/.test(poolId) ? poolId : '';
+  // const safePoolId = 'CBPXVCDXVCRCD7RHXYPQUHKVE7OGLU6VSUHWIXYFBRRAS2VEZKZ2VA7L';
   const safeAssetId = typeof assetId == 'string' && /^[0-9A-Z]{56}$/.test(assetId) ? assetId : '';
 
-  const { data: poolMeta, error: poolError } = usePoolMeta(safePoolId);
+  let { data: poolMeta, error: poolError } = usePoolMeta(safePoolId);
+  console.log('ARTUROOOOO');
+  console.log('poolMeta', poolMeta);
+  // console.log('poolMeta.id', poolMeta.id);
+  console.log('poolError', poolError);
+
+  // if (poolMeta) {
+  //   poolMeta.id = 'CBPXVCDXVCRCD7RHXYPQUHKVE7OGLU6VSUHWIXYFBRRAS2VEZKZ2VA7L';
+  // }
+
   const { data: pool } = usePool(poolMeta);
   const { data: tokenMetadata } = useTokenMetadata(safeAssetId);
   const reserve = pool?.reserves.get(safeAssetId);

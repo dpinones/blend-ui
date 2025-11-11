@@ -11,27 +11,19 @@ export const ToggleButton: React.FC<ToggleButtonProps> = React.forwardRef(
   ({ active, palette, sx, children, color, ...props }, ref) => {
     const theme = useTheme();
     return (
-      <>
-        {active ? (
-          <OpaqueButton palette={palette} sx={{ ...sx }} {...props} passedRef={ref}>
-            {children}
-          </OpaqueButton>
-        ) : (
-          <Button
-            variant="text"
-            sx={{
-              background: theme.palette.background.paper,
-              color: theme.palette.common.white,
-              '&:hover': { background: theme.palette.background.paper, color: palette.main },
-              ...sx,
-            }}
-            {...props}
-            ref={ref}
-          >
-            {children}
-          </Button>
-        )}
-      </>
+      <Button
+        variant="text"
+        sx={{
+          background: 'transparent',
+          color: '#1B4B47',
+          fontWeight: 500,
+          ...sx,
+        }}
+        {...props}
+        ref={ref}
+      >
+        {children}
+      </Button>
     );
   }
 );

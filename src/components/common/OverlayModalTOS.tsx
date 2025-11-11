@@ -6,7 +6,7 @@ import { TOS } from './TOS';
 export const OverlayModalTOS: React.FC = () => {
   const theme = useTheme();
 
-  const [showTosModal, setShowTosModal] = useState(true);
+  const [showTosModal, setShowTosModal] = useState(false);
   const handleAcknowledge = () => {
     localStorage.setItem('acknowledgeTos', 'true');
     setShowTosModal(false);
@@ -22,7 +22,7 @@ export const OverlayModalTOS: React.FC = () => {
 
   return (
     <>
-      {showTosModal && (
+      {/* {showTosModal && (
         <Box
           sx={{
             width: '100%',
@@ -98,7 +98,7 @@ export const OverlayModalTOS: React.FC = () => {
             </Box>
           </Box>
         </Box>
-      )}
+      )} */}
     </>
   );
 };
