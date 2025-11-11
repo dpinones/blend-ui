@@ -46,6 +46,7 @@ import { useLocalStorageState } from '../hooks';
 import { useQueryClientCacheCleaner } from '../hooks/api';
 import { PoolMeta } from '../hooks/types';
 import { CometClient, CometLiquidityArgs, CometSingleSidedDepositArgs } from '../utils/comet';
+import { getValidationErrorMessage } from '../utils/poolValidationErrors';
 import { useSettings } from './settings';
 
 export interface IWalletContext {
@@ -54,6 +55,7 @@ export interface IWalletContext {
   txStatus: TxStatus;
   lastTxHash: string | undefined;
   lastTxFailure: string | undefined;
+  lastTxFailureIsValidation: boolean;
   txType: TxType;
   walletId: string | undefined;
   txInclusionFee: InclusionFee;
@@ -181,6 +183,7 @@ export const WalletProvider = ({ children = null as any }) => {
   const [txStatus, setTxStatus] = useState<TxStatus>(TxStatus.NONE);
   const [txHash, setTxHash] = useState<string | undefined>(undefined);
   const [txFailure, setTxFailure] = useState<string | undefined>(undefined);
+  const [txFailureIsValidation, setTxFailureIsValidation] = useState<boolean>(false);
   const [txType, setTxType] = useState<TxType>(TxType.CONTRACT);
   const [txInclusionFee, setTxInclusionFee] = useState<InclusionFee>({
     type: 'Medium',
@@ -208,6 +211,12 @@ export const WalletProvider = ({ children = null as any }) => {
 
   function setFailureMessage(message: string | undefined) {
     if (message) {
+      // Check if message already starts with Fortgate: (validation errors)
+      if (message.startsWith('Fortgate:')) {
+        setTxFailure(message);
+        return;
+      }
+
       // some contract failures include diagnostic information. If so, try and remove it.
       let substrings = message.split('Event log (newest first):');
       if (substrings.length > 1) {
@@ -276,10 +285,17 @@ export const WalletProvider = ({ children = null as any }) => {
     if (connected) {
       setTxStatus(TxStatus.SIGNING);
       try {
+        console.log('✍️ Signing transaction...');
+        console.log('✍️ TX XDR to sign:', xdr);
+
         let { signedTxXdr } = await walletKit.signTransaction(xdr, {
           address: walletAddress,
           networkPassphrase: network.passphrase as WalletNetwork,
         });
+
+        console.log('✅ Transaction signed successfully');
+        console.log('✅ Signed TX XDR:', signedTxXdr);
+
         setTxStatus(TxStatus.SUBMITTING);
         return signedTxXdr;
       } catch (e: any) {
@@ -313,7 +329,14 @@ export const WalletProvider = ({ children = null as any }) => {
   }
 
   async function sendTransaction(transaction: Transaction): Promise<boolean> {
+    console.log('🚀 ========== TRANSACTION DETAILS ==========');
+    console.log('Transaction Hash:', transaction.hash().toString('hex'));
+    console.log('Transaction XDR:', transaction.toXDR());
+
     let send_tx_response = await stellarRpc.sendTransaction(transaction);
+    console.log('📤 Send Response:', send_tx_response);
+    console.log('📤 Transaction Hash:', send_tx_response.hash);
+
     let curr_time = Date.now();
 
     // Attempt to send the transaction and poll for the result
@@ -336,6 +359,39 @@ export const WalletProvider = ({ children = null as any }) => {
       get_tx_response = await stellarRpc.getTransaction(send_tx_response.hash);
     }
 
+    console.log('📥 Get TX Response:', get_tx_response);
+    console.log('📥 Status:', get_tx_response.status);
+
+    // Log additional transaction details
+    if (get_tx_response.status === 'SUCCESS') {
+      if ('resultMetaXdr' in get_tx_response) {
+        console.log('📊 Result Meta XDR:', get_tx_response.resultMetaXdr);
+      }
+      if ('returnValue' in get_tx_response) {
+        console.log('🔄 Return Value:', JSON.stringify(get_tx_response.returnValue, null, 2));
+
+        // Try to decode the return value for common error patterns
+        try {
+          const returnVal = get_tx_response.returnValue;
+          if (returnVal && typeof returnVal === 'object' && '_value' in returnVal) {
+            const value = (returnVal as any)._value;
+            if (Array.isArray(value) && value.length === 2) {
+              const errorType = value[0]?._value?.toString() || value[0];
+              const errorCode = value[1]?._value || value[1];
+              console.log('⚠️ CONTRACT ERROR DETECTED:');
+              console.log('   Error Type:', errorType);
+              console.log('   Error Code:', errorCode);
+            }
+          }
+        } catch (e) {
+          console.log('Could not parse return value:', e);
+        }
+      }
+
+      // Log the full response to see all available data
+      console.log('📋 Full TX Response Details:', JSON.stringify(get_tx_response, null, 2));
+    }
+
     if (get_tx_response.status === 'NOT_FOUND') {
       console.error('Unable to validate transaction success: ', get_tx_response.txHash);
       setFailureMessage(
@@ -348,12 +404,37 @@ export const WalletProvider = ({ children = null as any }) => {
     let hash = transaction.hash().toString('hex');
     setTxHash(hash);
     if (get_tx_response.status === 'SUCCESS') {
-      console.log('Successfully submitted transaction: ', hash);
+      console.log('✅ Successfully submitted transaction: ', hash);
+      console.log('✅ Transaction Result:', JSON.stringify(get_tx_response, null, 2));
+
+      // Check if the contract returned ValidationFailed
+      if ('returnValue' in get_tx_response) {
+        const returnVal = get_tx_response.returnValue;
+        if (returnVal && typeof returnVal === 'object' && '_value' in returnVal) {
+          const value = (returnVal as any)._value;
+          if (Array.isArray(value) && value.length === 2) {
+            const errorType = value[0]?._value?.toString() || value[0];
+            const errorCode = value[1]?._value || value[1];
+
+            if (errorType === 'ValidationFailed' || (typeof errorType === 'object' && JSON.stringify(errorType).includes('ValidationFailed'))) {
+              console.error('❌ Contract Validation Failed - Error Code:', errorCode);
+              const errorMessage = getValidationErrorMessage(Number(errorCode));
+              console.error('❌ Error Message:', errorMessage);
+              setFailureMessage(errorMessage);
+              setTxFailureIsValidation(true);
+              setTxStatus(TxStatus.FAIL);
+              return false;
+            }
+          }
+        }
+      }
+
       // stall for a bit to ensure data propagates to horizon
       await new Promise((resolve) => setTimeout(resolve, 500));
       setTxStatus(TxStatus.SUCCESS);
       return true;
     } else {
+      console.log('Transaction failed:', JSON.stringify(get_tx_response, null, 2));
       let error = parseError(get_tx_response);
       console.error(`Transaction failed: `, hash, error);
       setFailureMessage(ContractErrorType[error.type]);
@@ -392,10 +473,20 @@ export const WalletProvider = ({ children = null as any }) => {
         timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 2 * 60 * 1000 },
       }).addOperation(operation);
       const transaction = tx_builder.build();
+
+      console.log('🔍 Simulating operation...');
       const simResponse = await simulateOperation(operation);
+      console.log('🔍 Simulation Response:', simResponse);
+
       const assembled_tx = rpc.assembleTransaction(transaction, simResponse).build();
+      console.log('🔧 Assembled TX XDR:', assembled_tx.toXDR());
+
       const extended_tx = addReflectorEntries(assembled_tx.toXDR());
+      console.log('🔧 Extended TX XDR:', extended_tx);
+
       const signedTx = await sign(extended_tx);
+      console.log('✍️ Signed TX XDR:', signedTx);
+
       const tx = new Transaction(signedTx, network.passphrase);
       await sendTransaction(tx);
     } catch (e: any) {
@@ -409,6 +500,7 @@ export const WalletProvider = ({ children = null as any }) => {
     setTxStatus(TxStatus.NONE);
     setTxHash(undefined);
     setTxFailure(undefined);
+    setTxFailureIsValidation(false);
     setTxType(TxType.CONTRACT);
   }
 
@@ -779,6 +871,7 @@ export const WalletProvider = ({ children = null as any }) => {
         txStatus,
         lastTxHash: txHash,
         lastTxFailure: txFailure,
+        lastTxFailureIsValidation: txFailureIsValidation,
         txType,
         walletId: autoConnect,
         isLoading: loading,

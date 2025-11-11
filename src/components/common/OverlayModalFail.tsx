@@ -1,5 +1,6 @@
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { Box, Link, Typography, useTheme } from '@mui/material';
 import { useWallet } from '../../contexts/wallet';
 import { OpaqueButton } from './OpaqueButton';
@@ -7,7 +8,7 @@ import { CloseableOverlayProps } from './OverlayModal';
 
 export const OverlayModalFail: React.FC<CloseableOverlayProps> = ({ handleCloseOverlay }) => {
   const theme = useTheme();
-  const { lastTxHash, lastTxFailure } = useWallet();
+  const { lastTxHash, lastTxFailure, lastTxFailureIsValidation } = useWallet();
 
   const txFailure =
     lastTxFailure == undefined || lastTxFailure == '' ? 'Unknown error occured.' : lastTxFailure;
@@ -38,9 +39,15 @@ export const OverlayModalFail: React.FC<CloseableOverlayProps> = ({ handleCloseO
           justifyContent: 'center',
         }}
       >
-        <ErrorOutlineIcon sx={{ fontSize: '80px', color: '#E7424C' }} />
+        {lastTxFailureIsValidation ? (
+          <WarningAmberIcon sx={{ fontSize: '80px', color: '#FFA726' }} />
+        ) : (
+          <ErrorOutlineIcon sx={{ fontSize: '80px', color: '#E7424C' }} />
+        )}
         <Typography variant="h2" sx={{ margin: '12px' }}>
-          {`Transaction submission failed!`}
+          {lastTxFailureIsValidation
+            ? `Transaction validation failed!`
+            : `Transaction submission failed!`}
         </Typography>
         <Typography variant="h2" sx={{ margin: '12px' }}>
           {txFailure}

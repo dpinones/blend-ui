@@ -91,16 +91,26 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         sx={{
           '& .MuiSnackbarContent-root': {
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
-            boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.3)',
+            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a7b 100%)',
+            color: '#ffffff',
+            boxShadow: '0px 4px 16px rgba(30, 58, 95, 0.4), 0px 0px 8px rgba(45, 90, 123, 0.3)',
             borderRadius: '8px',
             padding: '12px 16px',
             fontSize: '14px',
-            fontWeight: 500,
+            fontWeight: 600,
+            border: '1px solid rgba(100, 180, 255, 0.3)',
           },
         }}
-        message="Protected by Orbit Shield"
+        message={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>Protected by Fortgate</span>
+            <img
+              src="/icons/fortgate_logo 2.png"
+              alt="Fortgate Logo"
+              style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+            />
+          </Box>
+        }
       />
     </>
   );
