@@ -7,6 +7,7 @@ export const PoolValidationErrors: Record<number, string> = {
   // Common validation errors from check_and_submit
   100: 'Address is blacklisted - Transaction blocked by blacklist policy',
   200: 'Blender Policy Check Failed - Transaction exceeds the maximum allowed amount',
+  300: 'Blender Policy Check Failed - Transaction exceeds the minimum allowed amount',
 };
 
 /**
