@@ -91,23 +91,26 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         sx={{
           '& .MuiSnackbarContent-root': {
-            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a7b 100%)',
+            background: '#635797ff',
             color: '#ffffff',
-            boxShadow: '0px 4px 16px rgba(30, 58, 95, 0.4), 0px 0px 8px rgba(45, 90, 123, 0.3)',
+            boxShadow: '0px 4px 16px rgba(145, 135, 190, 0.4), 0px 0px 8px rgba(145, 135, 190, 0.3)',
             borderRadius: '8px',
-            padding: '12px 16px',
+            padding: '8px 12px',
             fontSize: '14px',
             fontWeight: 600,
-            border: '1px solid rgba(100, 180, 255, 0.3)',
+            border: '1px solid rgba(145, 135, 190, 0.5)',
+            minWidth: 'auto',
+            display: 'flex',
+            justifyContent: 'center',
           },
         }}
         message={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>Protected by Fortgate</span>
+            <span style={{ color: '#ffffff' }}>Protected by</span>
             <img
-              src="/icons/fortgate_logo 2.png"
-              alt="Fortgate Logo"
-              style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+              src="/fortgate.png"
+              alt="Fortgate"
+              style={{ width: '80px', height: 'auto', objectFit: 'contain' }}
             />
           </Box>
         }
