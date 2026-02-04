@@ -115,7 +115,7 @@ export const LendAnvil: React.FC<ReserveComponentProps> = ({ poolId, assetId }) 
       };
       // Create a copy of poolMeta to avoid mutating the original
       const poolMetaToSubmit = !sim
-        ? { ...poolMeta, id: 'CC76Q3NAFLCBWT4A77IM2UA5P6GM6CRNIWGH2ZO5BBSFRNDII6TG2JNL' }
+        ? { ...poolMeta, id: 'CBYJIRDQAKEMCTKJXEADN37RXW5K67UBXFQ6VSW4HJNIYOZXYB7ONPXP' }
         : poolMeta;
       const result = await poolSubmit(poolMetaToSubmit, submitArgs, sim);
 
